@@ -7,60 +7,51 @@ screen = pygame.display.set_mode((800, 750))
 screen.fill('mediumseagreen')
 pygame.display.set_caption('PyChess')
 clock = pygame.time.Clock()
+PIECE_SIDE = 70
+pieces = ["king", "pawn", "knight", "bishop", "rook", "queen"]
+board = [
+    [10, 8, 9, 11, 12, 9, 8, 10],
+    [7, 7, 7, 7, 7, 7, 7, 7],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1],
+    [4, 2, 3, 5, 6, 3, 2, 4]
+]
 
 
 def loadBoard():
     isWhite = True
     for i in range(8):
         for j in range(8):
-            plate = pygame.Surface((70, 70))
+            plate = pygame.Surface((PIECE_SIDE, PIECE_SIDE))
             plate.fill('cornsilk' if isWhite else 'burlywood4')
             isWhite = not isWhite
-            screen.blit(plate, (120 + 70 * i, 100 + 70 * j))
+            screen.blit(plate, (120 + PIECE_SIDE * i, 100 + PIECE_SIDE * j))
         isWhite = not isWhite
 
 
-def loadSinglePiece(colour, piece):
+def loadSinglePiece(colour, piece, pos):
     rel_path = '\\sprites\\{}\\{}.png'.format(colour, piece)
     source_path = Path(__file__).resolve()
     source_dir = source_path.parent
     piece = pygame.image.load(source_dir.__str__() + rel_path)
-    return pygame.transform.rotozoom(piece, 0, 0.45)
+    piece = pygame.transform.rotozoom(piece, 0, 0.45)
+    x, y = pos
+    xReal = 120 + PIECE_SIDE * x + (PIECE_SIDE - piece.get_width()) / 2
+    yReal = 100 + PIECE_SIDE * y + (PIECE_SIDE - piece.get_height()) / 2
+    screen.blit(piece, (xReal, yReal))
 
 
 def loadPieces():
-    curr_piece = loadSinglePiece('white', 'pawn')
-    for i in range(8):
-        screen.blit(curr_piece, (131 + 70 * i, 528))
-    curr_piece = loadSinglePiece('white', 'rook')
-    screen.blit(curr_piece, (128, 600))
-    screen.blit(curr_piece, (618, 600))
-    curr_piece = loadSinglePiece('white', 'knight')
-    screen.blit(curr_piece, (198, 600))
-    screen.blit(curr_piece, (548, 600))
-    curr_piece = loadSinglePiece('white', 'bishop')
-    screen.blit(curr_piece, (266, 600))
-    screen.blit(curr_piece, (476, 600))
-    curr_piece = loadSinglePiece('white', 'queen')
-    screen.blit(curr_piece, (333, 600))
-    curr_piece = loadSinglePiece('white', 'king')
-    screen.blit(curr_piece, (405, 600))
-    curr_piece = loadSinglePiece('black', 'pawn')
-    for i in range(8):
-        screen.blit(curr_piece, (131 + 70 * i, 180))
-    curr_piece = loadSinglePiece('black', 'rook')
-    screen.blit(curr_piece, (128, 110))
-    screen.blit(curr_piece, (618, 110))
-    curr_piece = loadSinglePiece('black', 'knight')
-    screen.blit(curr_piece, (198, 110))
-    screen.blit(curr_piece, (548, 110))
-    curr_piece = loadSinglePiece('black', 'bishop')
-    screen.blit(curr_piece, (266, 110))
-    screen.blit(curr_piece, (476, 110))
-    curr_piece = loadSinglePiece('black', 'queen')
-    screen.blit(curr_piece, (333, 110))
-    curr_piece = loadSinglePiece('black', 'king')
-    screen.blit(curr_piece, (405, 110))
+    for rows in range(board.__len__()):
+        for columns in range(board[rows].__len__()):
+            if board[rows][columns] == 0:
+                continue
+            colour = 'white' if board[rows][columns] <= 6 else 'black'
+            piece = board[rows][columns] % 6
+            loadSinglePiece(colour, pieces[piece], (columns, rows))
 
 
 while True:
