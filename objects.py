@@ -15,7 +15,7 @@ class Piece(ABC):
     def get_pos(self) -> Tuple[int, int]:
         return self.pos
 
-    def set_pos(self, pos: Tuple[int, int]):
+    def set_pos(self, pos: Tuple[int, int]) -> None:
         self.pos = pos
 
     def get_class_name(self) -> str:
@@ -29,7 +29,11 @@ class Piece(ABC):
         return pygame.transform.rotozoom(image, 0, 0.45)
 
     @abstractmethod
-    def get_moves() -> List[int]:
+    def get_moves(self) -> List[int]:
+        pass
+
+    @abstractmethod
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
         pass
 
 
@@ -38,43 +42,72 @@ class Pawn(Piece):
         Piece.__init__(self, colour, pos)
         self.has_moved = False
 
-    def get_moves(self) -> List[int]:
+    def get_moves(self, current_player: int) -> List[int]:
         moves = []
-        black_white = 1 if self.colour == "white" else -1
-        moves.append((self.pos[0], self.pos[1] - (1 * black_white)))
-        if not self.has_moved:
-            moves.append((self.pos[0], self.pos[1] - (2 * black_white)))
+        if current_player == 0 and self.get_colour() == 'white':
+            moves = self.get_moves_white()
+        elif current_player == 1 and self.get_colour() == 'black':
+            moves = self.get_moves_black()
         return moves
+
+    def get_moves_white(self) -> List[int]:
+        moves = []
+        moves.append((self.pos[0], self.pos[1] - 1))
+        if not self.has_moved:
+            moves.append((self.pos[0], self.pos[1] - 2))
+        return moves
+
+    def get_moves_black(self) -> List[int]:
+        moves = []
+        moves.append((self.pos[0], self.pos[1] + 1))
+        if not self.has_moved:
+            moves.append((self.pos[0], self.pos[1] + 2))
+        return moves
+
+    def move_piece(self, current_player: int, pos: Tuple[int, int]) -> bool:
+        new_pos = next((position for position in self.get_moves(current_player) if pos == position), None)
+        if new_pos is not None:
+            self.set_pos(pos)
+            self.has_moved = True
+            return True
+        return False
 
 
 class Knight(Piece):
-    def get_moves():
+    def get_moves(self) -> List[int]:
+        pass
+
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
         pass
 
 
 class Bishop(Piece):
-    def get_moves():
+    def get_moves(self) -> List[int]:
+        pass
+
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
         pass
 
 
 class Rook(Piece):
-    def get_moves():
+    def get_moves(self) -> List[int]:
+        pass
+
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
         pass
 
 
 class King(Piece):
-    def get_moves():
+    def get_moves(self) -> List[int]:
+        pass
+
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
         pass
 
 
 class Queen(Piece):
-    def get_moves():
+    def get_moves(self) -> List[int]:
         pass
 
-
-class Circle:
-    def __init__(self, pos) -> None:
-        self.pos = pos
-
-    def get_pos(self) -> Tuple[int, int]:
-        return self.pos
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
+        pass

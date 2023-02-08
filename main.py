@@ -14,6 +14,8 @@ START_X = 120
 START_Y = 100
 pieces = []
 circles = []
+current_piece = None
+current_player = 0
 boardRectangle = pygame.Rect(START_X, START_Y, 8 * PIECE_SIDE, 8 * PIECE_SIDE)
 
 
@@ -46,7 +48,7 @@ def drawCircles():
 
 def set_circles(piece: Piece):
     global circles
-    circles = piece.get_moves()
+    circles = piece.get_moves(current_player)
 
 
 def load_single_piece(piece: Piece):
@@ -103,8 +105,17 @@ while True:
             pygame.quit()
             exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if (get_position(pygame.mouse.get_pos()) != (-1, -1)):
+            piece_clicked = get_piece_on_board(pygame.mouse.get_pos())
+            clicked_pos = get_position(pygame.mouse.get_pos())
+            if clicked_pos != (-1, -1) and piece_clicked is not None:
                 set_circles(get_piece_on_board(pygame.mouse.get_pos()))
+                current_piece = piece_clicked
+            elif current_piece is not None:
+                if current_piece.move_piece(current_player, clicked_pos):
+                    circles = []
+                    current_player = (current_player + 1) % 2
+            else:
+                circles = []
     load_board()
     load_pieces()
     drawCircles()
