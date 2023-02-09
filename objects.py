@@ -42,31 +42,25 @@ class Pawn(Piece):
         Piece.__init__(self, colour, pos)
         self.has_moved = False
 
-    def get_moves(self, current_player: int) -> List[int]:
+    def get_moves(self) -> List[int]:
         moves = []
-        if current_player == 0 and self.get_colour() == 'white':
-            moves = self.get_moves_white()
-        elif current_player == 1 and self.get_colour() == 'black':
-            moves = self.get_moves_black()
+        black_white = -1 if self.get_colour() == 'white' else 1
+        if Piece_Handler.get_piece_on_board((self.pos[0], self.pos[1] + black_white)) is None:
+            moves.append((self.pos[0], self.pos[1] + black_white))
+        if not self.has_moved and Piece_Handler.get_piece_on_board((self.pos[0], self.pos[1] + 2 * black_white)) is None:
+            moves.append((self.pos[0], self.pos[1] + 2 * black_white))
+        if Piece_Handler.get_piece_on_board((self.pos[0] + 1, self.pos[1] + black_white)) is not None:
+            moves.append(((self.pos[0] + 1, self.pos[1] + black_white)))
+        if Piece_Handler.get_piece_on_board((self.pos[0] - 1, self.pos[1] + black_white)) is not None:
+            moves.append(((self.pos[0] - 1, self.pos[1] + black_white)))
         return moves
 
-    def get_moves_white(self) -> List[int]:
-        moves = []
-        moves.append((self.pos[0], self.pos[1] - 1))
-        if not self.has_moved:
-            moves.append((self.pos[0], self.pos[1] - 2))
-        return moves
-
-    def get_moves_black(self) -> List[int]:
-        moves = []
-        moves.append((self.pos[0], self.pos[1] + 1))
-        if not self.has_moved:
-            moves.append((self.pos[0], self.pos[1] + 2))
-        return moves
-
-    def move_piece(self, current_player: int, pos: Tuple[int, int]) -> bool:
-        new_pos = next((position for position in self.get_moves(current_player) if pos == position), None)
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
+        new_pos = next((position for position in self.get_moves() if pos == position), None)
         if new_pos is not None:
+            piece_on_new_pos = Piece_Handler.get_piece_on_board(pos)
+            if piece_on_new_pos is not None:
+                Piece_Handler.remove_piece(piece_on_new_pos)
             self.set_pos(pos)
             self.has_moved = True
             return True
@@ -111,3 +105,39 @@ class Queen(Piece):
 
     def move_piece(self, pos: Tuple[int, int]) -> bool:
         pass
+
+
+class Piece_Handler():
+    pieces = []
+
+    @staticmethod
+    def init_pieces() -> None:
+        for i in range(8):
+            Piece_Handler.pieces.append(Pawn("white", (i, 6)))
+            Piece_Handler.pieces.append(Pawn("black", (i, 1)))
+        Piece_Handler.pieces.append(Rook("black", (0, 0)))
+        Piece_Handler.pieces.append(Rook("black", (7, 0)))
+        Piece_Handler.pieces.append(Rook("white", (0, 7)))
+        Piece_Handler.pieces.append(Rook("white", (7, 7)))
+        Piece_Handler.pieces.append(Knight("black", (1, 0)))
+        Piece_Handler.pieces.append(Knight("black", (6, 0)))
+        Piece_Handler.pieces.append(Knight("white", (1, 7)))
+        Piece_Handler.pieces.append(Knight("white", (6, 7)))
+        Piece_Handler.pieces.append(Bishop("black", (2, 0)))
+        Piece_Handler.pieces.append(Bishop("black", (5, 0)))
+        Piece_Handler.pieces.append(Bishop("white", (2, 7)))
+        Piece_Handler.pieces.append(Bishop("white", (5, 7)))
+        Piece_Handler.pieces.append(King("black", (4, 0)))
+        Piece_Handler.pieces.append(King("white", (4, 7)))
+        Piece_Handler.pieces.append(Queen("black", (3, 0)))
+        Piece_Handler.pieces.append(Queen("white", (3, 7)))
+
+    @staticmethod
+    def get_pieces() -> List[Piece]:
+        return Piece_Handler.pieces
+
+    def get_piece_on_board(pos: Tuple[int]) -> Piece:
+        return next((piece for piece in Piece_Handler.get_pieces() if piece.get_pos() == pos), None)
+
+    def remove_piece(piece: Piece) -> None:
+        Piece_Handler.pieces.remove(piece)
