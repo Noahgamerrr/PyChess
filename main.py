@@ -1,5 +1,5 @@
 import pygame
-from objects import *
+from objects import Piece_Handler, Piece
 from typing import Tuple
 from sys import exit
 from pathlib import Path
@@ -83,17 +83,17 @@ while True:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             clicked_pos = get_position(pygame.mouse.get_pos())
             piece_clicked = Piece_Handler.get_piece_on_board(clicked_pos)
-            if current_piece is not None:
-                if current_piece.move_piece(clicked_pos):
-                    circles = []
-                    current_player = (current_player + 1) % 2
-                    current_piece = None
-            elif clicked_pos != (-1, -1) and piece_clicked is not None:
+            if clicked_pos != (-1, -1) and piece_clicked is not None and current_piece is None:
                 white_turn = current_player == 0 and piece_clicked.get_colour() == "white"
                 black_turn = current_player == 1 and piece_clicked.get_colour() == "black"
                 if white_turn or black_turn:
                     set_circles(Piece_Handler.get_piece_on_board(clicked_pos))
                     current_piece = piece_clicked
+            elif current_piece is not None and clicked_pos != (-1, -1) and clicked_pos in circles:
+                if current_piece.move_piece(clicked_pos):
+                    circles = []
+                    current_player = (current_player + 1) % 2
+                    current_piece = None
             else:
                 circles = []
                 current_piece = None

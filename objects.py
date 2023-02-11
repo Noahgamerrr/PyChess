@@ -28,12 +28,19 @@ class Piece(ABC):
         image = pygame.image.load(source_dir.__str__() + rel_path)
         return pygame.transform.rotozoom(image, 0, 0.45)
 
-    @abstractmethod
-    def get_moves(self) -> List[int]:
-        pass
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
+        new_pos = next((position for position in self.get_moves() if pos == position), None)
+        if new_pos is not None:
+            piece_on_new_pos = Piece_Handler.get_piece_on_board(pos)
+            if piece_on_new_pos is not None:
+                Piece_Handler.remove_piece(piece_on_new_pos)
+            self.set_pos(pos)
+            self.has_moved = True
+            return True
+        return False
 
     @abstractmethod
-    def move_piece(self, pos: Tuple[int, int]) -> bool:
+    def get_moves(self) -> List[int]:
         pass
 
 
@@ -55,23 +62,9 @@ class Pawn(Piece):
             moves.append(((self.pos[0] - 1, self.pos[1] + black_white)))
         return moves
 
-    def move_piece(self, pos: Tuple[int, int]) -> bool:
-        new_pos = next((position for position in self.get_moves() if pos == position), None)
-        if new_pos is not None:
-            piece_on_new_pos = Piece_Handler.get_piece_on_board(pos)
-            if piece_on_new_pos is not None:
-                Piece_Handler.remove_piece(piece_on_new_pos)
-            self.set_pos(pos)
-            self.has_moved = True
-            return True
-        return False
-
 
 class Knight(Piece):
     def get_moves(self) -> List[int]:
-        pass
-
-    def move_piece(self, pos: Tuple[int, int]) -> bool:
         pass
 
 
@@ -79,15 +72,9 @@ class Bishop(Piece):
     def get_moves(self) -> List[int]:
         pass
 
-    def move_piece(self, pos: Tuple[int, int]) -> bool:
-        pass
-
 
 class Rook(Piece):
     def get_moves(self) -> List[int]:
-        pass
-
-    def move_piece(self, pos: Tuple[int, int]) -> bool:
         pass
 
 
@@ -95,15 +82,9 @@ class King(Piece):
     def get_moves(self) -> List[int]:
         pass
 
-    def move_piece(self, pos: Tuple[int, int]) -> bool:
-        pass
-
 
 class Queen(Piece):
     def get_moves(self) -> List[int]:
-        pass
-
-    def move_piece(self, pos: Tuple[int, int]) -> bool:
         pass
 
 
