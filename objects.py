@@ -35,9 +35,13 @@ class Piece(ABC):
             if piece_on_new_pos is not None:
                 Piece_Handler.remove_piece(piece_on_new_pos)
             self.set_pos(pos)
-            self.has_moved = True
+            Piece_Handler.set_ghost_piece((-1, -1))
             return True
         return False
+
+    def valid_take(self, pos) -> bool:
+        piece_taken = Piece_Handler.get_piece_on_board(pos)
+        return piece_taken is not None and self.colour != piece_taken.colour
 
     @abstractmethod
     def get_moves(self) -> List[int]:
@@ -56,11 +60,23 @@ class Pawn(Piece):
             moves.append((self.pos[0], self.pos[1] + black_white))
         if not self.has_moved and Piece_Handler.get_piece_on_board((self.pos[0], self.pos[1] + 2 * black_white)) is None:
             moves.append((self.pos[0], self.pos[1] + 2 * black_white))
-        if Piece_Handler.get_piece_on_board((self.pos[0] + 1, self.pos[1] + black_white)) is not None:
-            moves.append(((self.pos[0] + 1, self.pos[1] + black_white)))
-        if Piece_Handler.get_piece_on_board((self.pos[0] - 1, self.pos[1] + black_white)) is not None:
-            moves.append(((self.pos[0] - 1, self.pos[1] + black_white)))
+        if self.valid_take((self.pos[0] + 1, self.pos[1] + black_white)) or Piece_Handler.get_ghost_piece() == (self.pos[0] + 1, self.pos[1] + black_white):
+            moves.append((self.pos[0] + 1, self.pos[1] + black_white))
+        if self.valid_take((self.pos[0] - 1, self.pos[1] + black_white)) or Piece_Handler.get_ghost_piece() == (self.pos[0] - 1, self.pos[1] + black_white):
+            moves.append((self.pos[0] - 1, self.pos[1] + black_white))
         return moves
+
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
+        old_pos = self.pos
+        ghost_piece = Piece_Handler.get_ghost_piece()
+        valid_move = super().move_piece(pos)
+        black_white = 1 if self.get_colour() == 'white' else -1
+        if not self.has_moved and valid_move and abs(old_pos[1] - self.pos[1]) == 2:
+            Piece_Handler.set_ghost_piece((self.pos[0], self.pos[1] + black_white))
+        self.has_moved = True
+        if self.pos == ghost_piece:
+            Piece_Handler.remove_piece(Piece_Handler.get_piece_on_board((self.pos[0], self.pos[1] + black_white)))
+        return valid_move
 
 
 class Knight(Piece):
@@ -90,6 +106,7 @@ class Queen(Piece):
 
 class Piece_Handler():
     pieces = []
+    ghost = (-1, -1)
 
     @staticmethod
     def init_pieces() -> None:
@@ -122,3 +139,9 @@ class Piece_Handler():
 
     def remove_piece(piece: Piece) -> None:
         Piece_Handler.pieces.remove(piece)
+
+    def set_ghost_piece(pos) -> None:
+        Piece_Handler.ghost = pos
+
+    def get_ghost_piece() -> Tuple[int]:
+        return Piece_Handler.ghost

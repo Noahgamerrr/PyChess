@@ -31,7 +31,7 @@ def load_board():
 
 
 def drawCircle(pos: Tuple[int, int]):
-    if Piece_Handler.get_piece_on_board(pos) is None:
+    if Piece_Handler.get_piece_on_board(pos) is None and pos != Piece_Handler.get_ghost_piece():
         rel_path = '\\sprites\\others\\move_circle.png'
     else:
         rel_path = '\\sprites\\others\\take_circle.png'
