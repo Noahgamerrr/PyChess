@@ -39,7 +39,7 @@ class Piece(ABC):
             return True
         return False
 
-    def valid_take(self, pos) -> bool:
+    def valid_take(self, pos: Tuple[int]) -> bool:
         piece_taken = Piece_Handler.get_piece_on_board(pos)
         return piece_taken is not None and self.colour != piece_taken.colour
 
@@ -64,6 +64,7 @@ class Pawn(Piece):
             moves.append((self.pos[0] + 1, self.pos[1] + black_white))
         if self.valid_take((self.pos[0] - 1, self.pos[1] + black_white)) or Piece_Handler.get_ghost_piece() == (self.pos[0] - 1, self.pos[1] + black_white):
             moves.append((self.pos[0] - 1, self.pos[1] + black_white))
+        moves = Piece_Handler.filter_moves(moves)
         return moves
 
     def move_piece(self, pos: Tuple[int, int]) -> bool:
@@ -134,14 +135,29 @@ class Piece_Handler():
     def get_pieces() -> List[Piece]:
         return Piece_Handler.pieces
 
+    @staticmethod
     def get_piece_on_board(pos: Tuple[int]) -> Piece:
         return next((piece for piece in Piece_Handler.get_pieces() if piece.get_pos() == pos), None)
 
+    @staticmethod
     def remove_piece(piece: Piece) -> None:
         Piece_Handler.pieces.remove(piece)
 
-    def set_ghost_piece(pos) -> None:
+    @staticmethod
+    def set_ghost_piece(pos: Tuple[int]) -> None:
         Piece_Handler.ghost = pos
 
+    @staticmethod
     def get_ghost_piece() -> Tuple[int]:
         return Piece_Handler.ghost
+
+    @staticmethod
+    def filter_moves(moves: List[Tuple[int]]) -> List[Tuple[int]]:
+        for move in range(moves.__len__() - 1, -1, -1):
+            if not Piece_Handler.pos_on_board(moves[move]):
+                moves.remove(moves[move])
+        return moves
+
+    @staticmethod
+    def pos_on_board(pos: Tuple[int]) -> bool:
+        return pos[0] >= 0 and pos[0] < 8 and pos[1] >= 0 and pos[1] < 8
