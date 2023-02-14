@@ -19,7 +19,10 @@ boardRectangle = pygame.Rect(START_X, START_Y, 8 * PIECE_SIDE, 8 * PIECE_SIDE)
 Piece_Handler.init_pieces()
 
 
-def load_board():
+def load_board() -> None:
+    '''
+        Draws the board on the window
+    '''
     is_white = True
     for i in range(8):
         for j in range(8):
@@ -30,7 +33,15 @@ def load_board():
         is_white = not is_white
 
 
-def drawCircle(pos: Tuple[int, int]):
+def drawCircle(pos: Tuple[int, int]) -> None:
+    '''
+        Draws the circle on a given position
+
+        Parameters
+        ----------
+        pos: Tuple[int, int]
+            the position of the circle where it needs to be drawn
+    '''
     if Piece_Handler.get_piece_on_board(pos) is None and pos != Piece_Handler.get_ghost_piece():
         rel_path = '\\sprites\\others\\move_circle.png'
     else:
@@ -45,17 +56,36 @@ def drawCircle(pos: Tuple[int, int]):
     screen.blit(image, (x_real, y_real))
 
 
-def drawCircles():
+def drawCircles() -> None:
+    '''
+        draws all the circles on the board for where the selected piece can move
+    '''
     for pos in circles:
         drawCircle(pos)
 
 
-def set_circles(piece: Piece):
+def set_circles(piece: Piece) -> None:
+    '''
+        Sets the circles variable to the possible moves of the selected piece
+
+        Parameters
+        ----------
+        piece: Piece
+            the piece from which the moves need to be saved
+    '''
     global circles
     circles = piece.get_moves()
 
 
-def load_single_piece(piece: Piece):
+def load_single_piece(piece: Piece) -> None:
+    '''
+        Draws a piece on the board
+
+        Parameters
+        ----------
+        piece: Piece
+            The piece that needs to be drawn on the board
+    '''
     image = piece.getImage()
     x, y = piece.get_pos()
     x_real = START_X + PIECE_SIDE * x + (PIECE_SIDE - image.get_width()) / 2
@@ -63,12 +93,29 @@ def load_single_piece(piece: Piece):
     screen.blit(image, (x_real, y_real))
 
 
-def load_pieces():
+def load_pieces() -> None:
+    '''
+        Loads all the pieces to the board
+    '''
     for piece in Piece_Handler.get_pieces():
         load_single_piece(piece)
 
 
-def get_position(pos: Tuple[int]) -> Tuple[int, int]:
+def get_position(pos: Tuple[int, int]) -> Tuple[int, int]:
+    '''
+        Turns the coordinates of the mouse-click into a position on the board
+        and returns it
+
+        Parameters
+        ----------
+        pos: Tuple[int, int]
+            the mouse-coordinates
+
+        Returns
+        -------
+        Tuple[int, int]
+            the board-coordinates the mouse clicked
+    '''
     x, y = pos
     if boardRectangle.collidepoint((x, y)):
         return (int((x - START_X) / PIECE_SIDE), int((y - START_Y) / PIECE_SIDE))
