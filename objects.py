@@ -92,7 +92,31 @@ class Bishop(Piece):
 
 class Rook(Piece):
     def get_moves(self) -> List[int]:
-        pass
+        moves = []
+        for move in self.calculate_moves(1, 0):
+            moves.append(move)
+        for move in self.calculate_moves(-1, 0):
+            moves.append(move)
+        for move in self.calculate_moves(0, 1):
+            moves.append(move)
+        for move in self.calculate_moves(0, -1):
+            moves.append(move)
+        return moves
+
+    def calculate_moves(self, xChange: int, yChange: int) -> List[int]:
+        moves = []
+        i = xChange
+        j = yChange
+        while Piece_Handler.free_pos((self.pos[0] + i, self.pos[1] + j)):
+            moves.append((self.pos[0] + i, self.pos[1] + j))
+            i += xChange
+            j += yChange
+        try:
+            if Piece_Handler.get_colour_of_piece((self.pos[0] + i, self.pos[1] + j)) != self.get_colour():
+                moves.append((self.pos[0] + i, self.pos[1] + j))
+        except AttributeError:
+            pass
+        return moves
 
 
 class King(Piece):
@@ -159,5 +183,61 @@ class Piece_Handler():
         return moves
 
     @staticmethod
+    def get_colour_of_piece(pos: Tuple[int]) -> str:
+        '''
+            returns the colour of a piece on the board
+
+            Parameters
+            ----------
+            pos : Tuple[int]
+                the position of the piece
+
+            Returns
+            -------
+            str
+                the colour of the piece
+
+            Raises
+            ------
+            AttributeError
+                if the piece on the board happens to be None
+        '''
+        piece = Piece_Handler.get_piece_on_board(pos)
+        if piece is not None:
+            return piece.get_colour()
+        else:
+            raise AttributeError()
+
+    @staticmethod
     def pos_on_board(pos: Tuple[int]) -> bool:
+        '''
+            Checks if a position is on the board
+
+            Parameters
+            ----------
+            pos : Tuple[int]
+                the position that needs to be checked
+
+            Returns
+            -------
+            bool
+                a boolean if the position is on the board or not
+        '''
         return pos[0] >= 0 and pos[0] < 8 and pos[1] >= 0 and pos[1] < 8
+
+    @staticmethod
+    def free_pos(pos: Tuple[int]) -> bool:
+        '''
+            Checks if a position is free or not
+
+            Parameters
+            ----------
+            pos : Tuple[int]
+                the position that needs to be checked
+
+            Returns
+            -------
+            bool
+                a boolean if the position is free or not
+        '''
+        return Piece_Handler.pos_on_board(pos) and Piece_Handler.get_piece_on_board(pos) is None
