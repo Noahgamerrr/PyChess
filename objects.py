@@ -49,6 +49,11 @@ class Piece(ABC):
         pos_reserved(self, pos: Tuple[int, int]) -> bool
             if the position is already reserved by a piece of the same colour or not
 
+        filter_moves(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]
+            Filters all the moves for any moves out of the board
+            or for any moves which is already occupied by a
+            piece of the same colour
+
         get_moves(self) -> List[Tuple[int, int]]
             Returns all the possible moves for a piece
             (implementation by all the inheriting pieces)
@@ -211,6 +216,24 @@ class Piece(ABC):
         '''
         return not Piece_Handler.free_pos(pos) and Piece_Handler.get_piece_on_board(pos).get_colour() == self.get_colour()
 
+    def filter_moves(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        '''
+            Filters all the moves for any moves out of the board
+            or for any moves which is already occupied by a
+            piece of the same colour
+
+            Returns
+            -------
+            List[Tuple[int, int]]
+                all the valid moves the piece
+        '''
+        moves = Piece_Handler.filter_moves(moves)
+        for move in range(moves.__len__() - 1, -1, -1):
+            currentMove = moves[move]
+            if self.pos_reserved(currentMove):
+                moves.remove(moves[move])
+        return moves
+
     @abstractmethod
     def get_moves(self) -> List[Tuple[int, int]]:
         '''
@@ -330,11 +353,6 @@ class Knight(Piece):
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
-        filter_moves(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]
-            Filters all the moves for any moves out of the board
-            or for any moves which is already occupied by a
-            piece of the same colour
-
         filter_cartesian(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]
             Filters all the moves out of the cartesian product that don't fit
             into the moving pattern of the knight
@@ -361,24 +379,6 @@ class Knight(Piece):
         moves = self.filter_cartesian(moves)
         moves = list(map(self.map_moves_to_piece, moves))
         return self.filter_moves(moves)
-
-    def filter_moves(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
-        '''
-            Filters all the moves for any moves out of the board
-            or for any moves which is already occupied by a
-            piece of the same colour
-
-            Returns
-            -------
-            List[Tuple[int, int]]
-                all the valid moves the knight
-        '''
-        moves = Piece_Handler.filter_moves(moves)
-        for move in range(moves.__len__() - 1, -1, -1):
-            currentMove = moves[move]
-            if self.pos_reserved(currentMove):
-                moves.remove(moves[move])
-        return moves
 
     def filter_cartesian(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         '''
@@ -494,7 +494,12 @@ class Rook(Piece):
 
 class King(Piece):
     def get_moves(self) -> List[Tuple[int, int]]:
-        pass
+        moves = []
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if not (i == 0 and j == 0):
+                    moves.append((self.pos[0] + i, self.pos[1] + j))
+        return self.filter_moves(moves)
 
 
 class Queen(Piece):

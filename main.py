@@ -122,30 +122,31 @@ def get_position(pos: Tuple[int, int]) -> Tuple[int, int]:
     return (-1, -1)
 
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            exit()
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            clicked_pos = get_position(pygame.mouse.get_pos())
-            piece_clicked = Piece_Handler.get_piece_on_board(clicked_pos)
-            if clicked_pos != (-1, -1) and piece_clicked is not None and current_piece is None:
-                white_turn = current_player == 0 and piece_clicked.get_colour() == "white"
-                black_turn = current_player == 1 and piece_clicked.get_colour() == "black"
-                if white_turn or black_turn:
-                    set_circles(Piece_Handler.get_piece_on_board(clicked_pos))
-                    current_piece = piece_clicked
-            elif current_piece is not None and clicked_pos != (-1, -1) and clicked_pos in circles:
-                if current_piece.move_piece(clicked_pos):
+if __name__ == "__main__":
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                clicked_pos = get_position(pygame.mouse.get_pos())
+                piece_clicked = Piece_Handler.get_piece_on_board(clicked_pos)
+                if clicked_pos != (-1, -1) and piece_clicked is not None and current_piece is None:
+                    white_turn = current_player == 0 and piece_clicked.get_colour() == "white"
+                    black_turn = current_player == 1 and piece_clicked.get_colour() == "black"
+                    if white_turn or black_turn:
+                        set_circles(Piece_Handler.get_piece_on_board(clicked_pos))
+                        current_piece = piece_clicked
+                elif current_piece is not None and clicked_pos != (-1, -1) and clicked_pos in circles:
+                    if current_piece.move_piece(clicked_pos):
+                        circles = []
+                        current_player = (current_player + 1) % 2
+                        current_piece = None
+                else:
                     circles = []
-                    current_player = (current_player + 1) % 2
                     current_piece = None
-            else:
-                circles = []
-                current_piece = None
-    load_board()
-    load_pieces()
-    drawCircles()
-    pygame.display.update()
-    clock.tick(60)
+        load_board()
+        load_pieces()
+        drawCircles()
+        pygame.display.update()
+        clock.tick(60)
