@@ -465,16 +465,26 @@ class Rook(Piece):
         pos: Tuple[int, int]
             the position of the piece on the board
 
+        has_moved: int
+            if the rook has moved or not
+
         Methods
         -------
         get_moves(self) -> List[Tuple[int, int]]
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
+        get_has_moved(self) -> bool
+            Returns if the rook has moved or not
+
         Parent
         ------
         Piece
     '''
+    def __init__(self, colour: str, pos: Tuple[int, int]) -> None:
+        Piece.__init__(self, colour, pos)
+        self.has_moved = False
+
     def get_moves(self) -> List[Tuple[int, int]]:
         '''
             Returns all the possible moves for a piece
@@ -491,15 +501,116 @@ class Rook(Piece):
         moves.extend(self.calculate_moves(0, -1))
         return moves
 
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
+        '''
+            Extends the move_piece method from the Piece-class,
+            takes into account castling
+
+            Parameters
+            ----------
+            pos: Tuple[int, int]
+                the position the piece needs to be moved to
+
+            Returns
+            -------
+            bool
+                is the given position a valid move or not
+        '''
+        self.has_moved = True
+        return super().move_piece(pos)
+
+    def get_has_moved(self) -> bool:
+        '''
+            Returns if the rook has moved or not
+
+            Returns
+            -------
+            bool
+                if the rook has moved
+        '''
+        return self.has_moved
+
 
 class King(Piece):
+    '''
+        A class for the king, which is a child of the Piece-class
+
+        ...
+
+        Attributes
+        ----------
+        colour: str
+            the colour of the piece
+
+        pos: Tuple[int, int]
+            the position of the piece on the board
+
+        has_moved: int
+            if the king has moved or not
+
+        Methods
+        -------
+        get_moves(self) -> List[Tuple[int, int]]
+            Returns all the possible moves for a piece
+            Overrides the method from the Piece-class
+
+        Parent
+        ------
+        Piece
+    '''
+    def __init__(self, colour: str, pos: Tuple[int, int]) -> None:
+        Piece.__init__(self, colour, pos)
+        self.has_moved = False
+
     def get_moves(self) -> List[Tuple[int, int]]:
+        '''
+            Returns all the possible moves for a piece
+            Overrides the method from the Piece-class
+
+            Returns
+            -------
+            List[Tuple[int, int]]
+                all the valid moves
+        '''
         moves = []
         for i in range(-1, 2):
             for j in range(-1, 2):
                 if not (i == 0 and j == 0):
                     moves.append((self.pos[0] + i, self.pos[1] + j))
+        if not self.has_moved:
+            rook = Piece_Handler.get_piece_on_board((0, self.pos[1]))
+            rook.__class__ = Rook
+            if rook is not None and not rook.get_has_moved():
+                moves.append((self.pos[0] - 2, self.pos[1]))
+            rook = Piece_Handler.get_piece_on_board((7, self.pos[1]))
+            rook.__class__ = Rook
+            if rook is not None and not rook.get_has_moved():
+                moves.append((self.pos[0] + 2, self.pos[1]))
         return self.filter_moves(moves)
+
+    def move_piece(self, pos: Tuple[int, int]) -> bool:
+        '''
+            Extends the move_piece method from the Piece-class,
+            takes into account castling
+
+            Parameters
+            ----------
+            pos: Tuple[int, int]
+                the position the piece needs to be moved to
+
+            Returns
+            -------
+            bool
+                is the given position a valid move or not
+        '''
+        old_pos = self.pos
+        successfull = super().move_piece(pos)
+        if self.pos[0] - old_pos[0] == 2:
+            Piece_Handler.get_piece_on_board((self.pos[0] + 1, self.pos[1])).set_pos((self.pos[0] - 1, self.pos[1]))
+        elif self.pos[0] - old_pos[0] == -2:
+            Piece_Handler.get_piece_on_board((self.pos[0] - 2, self.pos[1])).set_pos((self.pos[0] + 1, self.pos[1]))
+        self.has_moved = True
+        return successfull
 
 
 class Queen(Piece):
