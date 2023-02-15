@@ -2,6 +2,7 @@ import pygame
 from abc import ABC, abstractmethod
 from typing import Tuple, List
 from pathlib import Path
+import itertools
 
 
 class Piece(ABC):
@@ -42,10 +43,13 @@ class Piece(ABC):
         valid_take(self, pos: Tuple[int, int]) -> bool
             Returns if a piece on a given position can be taken or not
 
-        calculate_moves(self, xChange: int, yChange: int = 0) -> List[int]
+        calculate_moves(self, xChange: int, yChange: int = 0) -> List[Tuple[int, int]]
             Calculates all the moves in a given direction and returns them
 
-        get_moves(self) -> List[int]
+        pos_reserved(self, pos: Tuple[int, int]) -> bool
+            if the position is already reserved by a piece of the same colour or not
+
+        get_moves(self) -> List[Tuple[int, int]]
             Returns all the possible moves for a piece
             (implementation by all the inheriting pieces)
     '''
@@ -163,7 +167,7 @@ class Piece(ABC):
         piece_taken = Piece_Handler.get_piece_on_board(pos)
         return piece_taken is not None and self.colour != piece_taken.colour
 
-    def calculate_moves(self, xChange: int, yChange: int = 0) -> List[int]:
+    def calculate_moves(self, xChange: int, yChange: int = 0) -> List[Tuple[int, int]]:
         '''
             Calculates all the moves in a given direction and returns them
 
@@ -177,7 +181,7 @@ class Piece(ABC):
 
             Returns
             -------
-            List[int]
+            List[Tuple[int, int]]
                 All the moves that were calculated
         '''
         moves = []
@@ -191,15 +195,31 @@ class Piece(ABC):
             moves.append((self.pos[0] + i, self.pos[1] + j))
         return moves
 
+    def pos_reserved(self, pos: Tuple[int, int]) -> bool:
+        '''
+            Checks if position is already reserved by a piece of the same colour
+
+            Parameters
+            ----------
+            pos: Tuple[int, int]
+                the position of the piece
+
+            Returns
+            -------
+            bool
+                if the position is already reserved by a piece of the same colour or not
+        '''
+        return not Piece_Handler.free_pos(pos) and Piece_Handler.get_piece_on_board(pos).get_colour() == self.get_colour()
+
     @abstractmethod
-    def get_moves(self) -> List[int]:
+    def get_moves(self) -> List[Tuple[int, int]]:
         '''
             Returns all the possible moves for a piece
             (implementation by all the child pieces)
 
             Returns
             -------
-            List[int]
+            List[Tuple[int, int]]
                 all the valid moves
         '''
         pass
@@ -224,7 +244,7 @@ class Pawn(Piece):
 
         Methods
         -------
-        get_moves(self) -> List[int]
+        get_moves(self) -> List[Tuple[int, int]]
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
@@ -240,14 +260,14 @@ class Pawn(Piece):
         Piece.__init__(self, colour, pos)
         self.has_moved = False
 
-    def get_moves(self) -> List[int]:
+    def get_moves(self) -> List[Tuple[int, int]]:
         '''
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
             Returns
             -------
-            List[int]
+            List[Tuple[int, int]]
                 all the valid moves
         '''
         moves = []
@@ -291,8 +311,103 @@ class Pawn(Piece):
 
 
 class Knight(Piece):
-    def get_moves(self) -> List[int]:
-        pass
+    '''
+        A class for the knight, which is a child of the Piece-class
+
+        ...
+
+        Attributes
+        ----------
+        colour: str
+            the colour of the piece
+
+        pos: Tuple[int, int]
+            the position of the piece on the board
+
+        Methods
+        -------
+        get_moves(self) -> List[Tuple[int, int]]
+            Returns all the possible moves for a piece
+            Overrides the method from the Piece-class
+
+        filter_moves(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]
+            Filters all the moves for any moves out of the board
+            or for any moves which is already occupied by a
+            piece of the same colour
+
+        filter_cartesian(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]
+            Filters all the moves out of the cartesian product that don't fit
+            into the moving pattern of the knight
+
+        map_moves_to_piece(self, move: Tuple[int, int]) -> Tuple[int, int]
+            Maps the filtered cartesian product onto the actual piece
+
+        Parent
+        ------
+        Piece
+    '''
+    def get_moves(self) -> List[Tuple[int, int]]:
+        '''
+            Returns all the possible moves for a piece
+            Overrides the method from the Piece-class
+
+            Returns
+            -------
+            List[Tuple[int, int]]
+                all the valid moves
+        '''
+        cartesian = (-2, -1, 1, 2)
+        moves = list(itertools.product(cartesian, cartesian))
+        moves = self.filter_cartesian(moves)
+        moves = list(map(self.map_moves_to_piece, moves))
+        return self.filter_moves(moves)
+
+    def filter_moves(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        '''
+            Filters all the moves for any moves out of the board
+            or for any moves which is already occupied by a
+            piece of the same colour
+
+            Returns
+            -------
+            List[Tuple[int, int]]
+                all the valid moves the knight
+        '''
+        moves = Piece_Handler.filter_moves(moves)
+        for move in range(moves.__len__() - 1, -1, -1):
+            currentMove = moves[move]
+            if self.pos_reserved(currentMove):
+                moves.remove(moves[move])
+        return moves
+
+    def filter_cartesian(self, moves: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        '''
+            Filters all the moves out of the cartesian product that don't fit
+            into the moving pattern of the knight
+
+            Returns
+            -------
+            List[Tuple[int, int]]
+                all the valid moves for a knight in general
+        '''
+        for move in range(moves.__len__() - 1, -1, -1):
+            currentMove = moves[move]
+            if abs(currentMove[0]) == abs(currentMove[1]):
+                moves.remove(moves[move])
+        return moves
+
+    def map_moves_to_piece(self, move: Tuple[int, int]) -> Tuple[int, int]:
+        '''
+            Maps the filtered cartesian product onto the actual piece
+
+            Returns
+            -------
+            List[Tuple[int, int]]
+                the valid cartesian moves mapped to the knight
+        '''
+        x, y = move
+        x_self, y_self = self.pos
+        return (x + x_self, y + y_self)
 
 
 class Bishop(Piece):
@@ -311,7 +426,7 @@ class Bishop(Piece):
 
         Methods
         -------
-        get_moves(self) -> List[int]
+        get_moves(self) -> List[Tuple[int, int]]
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
@@ -319,14 +434,14 @@ class Bishop(Piece):
         ------
         Piece
     '''
-    def get_moves(self) -> List[int]:
+    def get_moves(self) -> List[Tuple[int, int]]:
         '''
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
             Returns
             -------
-            List[int]
+            List[Tuple[int, int]]
                 all the valid moves
         '''
         moves = self.calculate_moves(1, 1)
@@ -352,7 +467,7 @@ class Rook(Piece):
 
         Methods
         -------
-        get_moves(self) -> List[int]
+        get_moves(self) -> List[Tuple[int, int]]
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
@@ -360,14 +475,14 @@ class Rook(Piece):
         ------
         Piece
     '''
-    def get_moves(self) -> List[int]:
+    def get_moves(self) -> List[Tuple[int, int]]:
         '''
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
             Returns
             -------
-            List[int]
+            List[Tuple[int, int]]
                 all the valid moves
         '''
         moves = self.calculate_moves(1)
@@ -378,7 +493,7 @@ class Rook(Piece):
 
 
 class King(Piece):
-    def get_moves(self) -> List[int]:
+    def get_moves(self) -> List[Tuple[int, int]]:
         pass
 
 
@@ -398,7 +513,7 @@ class Queen(Piece):
 
         Methods
         -------
-        get_moves(self) -> List[int]
+        get_moves(self) -> List[Tuple[int, int]]
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
@@ -406,14 +521,14 @@ class Queen(Piece):
         ------
         Piece
     '''
-    def get_moves(self) -> List[int]:
+    def get_moves(self) -> List[Tuple[int, int]]:
         '''
             Returns all the possible moves for a piece
             Overrides the method from the Piece-class
 
             Returns
             -------
-            List[int]
+            List[Tuple[int, int]]
                 all the valid moves
         '''
         moves = Rook.get_moves(self)
