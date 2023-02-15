@@ -296,8 +296,44 @@ class Knight(Piece):
 
 
 class Bishop(Piece):
+    '''
+        A class for the bishop, which is a child of the Piece-class
+
+        ...
+
+        Attributes
+        ----------
+        colour: str
+            the colour of the piece
+
+        pos: Tuple[int, int]
+            the position of the piece on the board
+
+        Methods
+        -------
+        get_moves(self) -> List[int]
+            Returns all the possible moves for a piece
+            Overrides the method from the Piece-class
+
+        Parent
+        ------
+        Piece
+    '''
     def get_moves(self) -> List[int]:
-        pass
+        '''
+            Returns all the possible moves for a piece
+            Overrides the method from the Piece-class
+
+            Returns
+            -------
+            List[int]
+                all the valid moves
+        '''
+        moves = self.calculate_moves(1, 1)
+        moves.extend(self.calculate_moves(-1, 1))
+        moves.extend(self.calculate_moves(1, -1))
+        moves.extend(self.calculate_moves(-1, -1))
+        return moves
 
 
 class Rook(Piece):
@@ -334,15 +370,10 @@ class Rook(Piece):
             List[int]
                 all the valid moves
         '''
-        moves = []
-        for move in self.calculate_moves(1):
-            moves.append(move)
-        for move in self.calculate_moves(-1):
-            moves.append(move)
-        for move in self.calculate_moves(0, 1):
-            moves.append(move)
-        for move in self.calculate_moves(0, -1):
-            moves.append(move)
+        moves = self.calculate_moves(1)
+        moves.extend(self.calculate_moves(-1))
+        moves.extend(self.calculate_moves(0, 1))
+        moves.extend(self.calculate_moves(0, -1))
         return moves
 
 
@@ -352,8 +383,42 @@ class King(Piece):
 
 
 class Queen(Piece):
+    '''
+        A class for the queen, which is a child of the Piece-class
+
+        ...
+
+        Attributes
+        ----------
+        colour: str
+            the colour of the piece
+
+        pos: Tuple[int, int]
+            the position of the piece on the board
+
+        Methods
+        -------
+        get_moves(self) -> List[int]
+            Returns all the possible moves for a piece
+            Overrides the method from the Piece-class
+
+        Parent
+        ------
+        Piece
+    '''
     def get_moves(self) -> List[int]:
-        pass
+        '''
+            Returns all the possible moves for a piece
+            Overrides the method from the Piece-class
+
+            Returns
+            -------
+            List[int]
+                all the valid moves
+        '''
+        moves = Rook.get_moves(self)
+        moves.extend(Bishop.get_moves(self))
+        return moves
 
 
 class Piece_Handler():
