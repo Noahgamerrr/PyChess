@@ -15,6 +15,7 @@ START_Y = 100
 circles = []
 current_piece = None
 current_player = 0
+promotion_screen_active = False
 boardRectangle = pygame.Rect(START_X, START_Y, 8 * PIECE_SIDE, 8 * PIECE_SIDE)
 Piece_Handler.init_pieces()
 
@@ -122,6 +123,104 @@ def get_position(pos: Tuple[int, int]) -> Tuple[int, int]:
     return (-1, -1)
 
 
+def get_promotion_position(mouse_pos: Tuple[int, int]) -> Tuple[int, int]:
+    '''
+        Turns the coordinates of the mouse-click into a position on the promotion-screen
+        and returns it
+
+        Parameters
+        ----------
+        mouse_pos: Tuple[int, int]
+            the mouse-coordinates
+
+        Returns
+        -------
+        Tuple[int, int]
+            the promotion-coordinates the mouse clicked
+    '''
+    board_pos = get_position(mouse_pos)
+    x, y = (board_pos[0] - 3, board_pos[0] - 3)
+    if x >= 0 and x <= 1 and y >= 0 and y <= 1:
+        return (x, y)
+    else:
+        return (-1, -1)
+
+
+def draw_promotion_screen() -> None:
+    '''
+        Draws the promotion-screen on the board
+    '''
+    promotion = pygame.Surface((PIECE_SIDE * 2, PIECE_SIDE * 2))
+    promotion.fill("white")
+    screen.blit(promotion, (START_X + PIECE_SIDE * 3, START_Y + PIECE_SIDE * 3))
+    draw_promotion_pieces()
+
+
+def draw_promotion_piece(colour: str, piece: str, pos: Tuple[int, int]) -> None:
+    '''
+        Draws a single piece on the promotion screen
+
+        Parameters
+        ----------
+        colour: str
+            the colour of the piece
+
+        piece: str
+            the name of the piece
+
+        pos: Tuple[int, int]
+            where the piece is located on the promotion-screen
+    '''
+    rel_path = '\\sprites\\{}\\{}.png'.format(colour, piece)
+    source_path = Path(__file__).resolve()
+    source_dir = source_path.parent
+    image = pygame.image.load(source_dir.__str__() + rel_path)
+    image = pygame.transform.rotozoom(image, 0, 0.45)
+    x = pos[0] + 3
+    y = pos[1] + 3
+    x_real = START_X + PIECE_SIDE * x + (PIECE_SIDE - image.get_width()) / 2
+    y_real = START_Y + PIECE_SIDE * y + (PIECE_SIDE - image.get_height()) / 2
+    screen.blit(image, (x_real, y_real))
+
+
+def draw_promotion_pieces() -> None:
+    '''
+        Draws all the promotion pieces onto the promotion screen
+    '''
+    draw_promotion_piece(current_piece.get_colour(), "queen", (0, 0))
+    draw_promotion_piece(current_piece.get_colour(), "knight", (0, 1))
+    draw_promotion_piece(current_piece.get_colour(), "bishop", (1, 0))
+    draw_promotion_piece(current_piece.get_colour(), "rook", (1, 1))
+
+
+def get_promotion(pos: Tuple[int, int]) -> str:
+    '''
+        Turns a given position on the promotion screen to the
+        respective piece
+
+        Parameters
+        ----------
+        pos: Tuple[int, int]
+            the position on the promotion-screen
+    '''
+    match pos:
+        case (0, 0):
+            return "queen"
+        case (0, 1):
+            return "knight"
+        case (1, 0):
+            return "bishop"
+        case (1, 1):
+            return "rook"
+
+
+def is_promotion_ready() -> bool:
+    '''
+        Checks if a pawn needs to be promoted or not
+    '''
+    return current_piece.get_class_name() == "Pawn" and (current_piece.get_pos()[1] == 0 or current_piece.get_pos()[1] == 7)
+
+
 if __name__ == "__main__":
     while True:
         for event in pygame.event.get():
@@ -129,24 +228,37 @@ if __name__ == "__main__":
                 pygame.quit()
                 exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                clicked_pos = get_position(pygame.mouse.get_pos())
-                piece_clicked = Piece_Handler.get_piece_on_board(clicked_pos)
-                if clicked_pos != (-1, -1) and piece_clicked is not None and current_piece is None:
-                    white_turn = current_player == 0 and piece_clicked.get_colour() == "white"
-                    black_turn = current_player == 1 and piece_clicked.get_colour() == "black"
-                    if white_turn or black_turn:
-                        set_circles(Piece_Handler.get_piece_on_board(clicked_pos))
-                        current_piece = piece_clicked
-                elif current_piece is not None and clicked_pos != (-1, -1) and clicked_pos in circles:
-                    if current_piece.move_piece(clicked_pos):
-                        circles = []
-                        current_player = (current_player + 1) % 2
+                if promotion_screen_active:
+                    pos = get_promotion_position(pygame.mouse.get_pos())
+                    if pos != (-1, -1):
+                        promotion_piece = get_promotion(pos)
+                        Piece_Handler.promote_piece(current_piece, promotion_piece)
                         current_piece = None
+                        promotion_screen_active = False
                 else:
-                    circles = []
-                    current_piece = None
+                    clicked_pos = get_position(pygame.mouse.get_pos())
+                    piece_clicked = Piece_Handler.get_piece_on_board(clicked_pos)
+                    if clicked_pos != (-1, -1) and piece_clicked is not None and current_piece is None:
+                        white_turn = current_player == 0 and piece_clicked.get_colour() == "white"
+                        black_turn = current_player == 1 and piece_clicked.get_colour() == "black"
+                        if white_turn or black_turn:
+                            set_circles(Piece_Handler.get_piece_on_board(clicked_pos))
+                            current_piece = piece_clicked
+                    elif current_piece is not None and clicked_pos != (-1, -1) and clicked_pos in circles:
+                        if current_piece.move_piece(clicked_pos):
+                            circles = []
+                            current_player = (current_player + 1) % 2
+                            if is_promotion_ready():
+                                promotion_screen_active = True
+                            else:
+                                current_piece = None
+                    else:
+                        circles = []
+                        current_piece = None
         load_board()
         load_pieces()
         drawCircles()
+        if promotion_screen_active:
+            draw_promotion_screen()
         pygame.display.update()
         clock.tick(60)

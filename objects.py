@@ -694,6 +694,9 @@ class Piece_Handler():
 
         free_pos(pos: Tuple[int, int]) -> bool
             Checks if a position is free or not
+
+        promote_piece(piece: Piece, promotion: str) -> None
+            Promotes a pawn to a given piece
     '''
 
     pieces = []
@@ -844,3 +847,28 @@ class Piece_Handler():
                 a boolean if the position is free or not
         '''
         return Piece_Handler.pos_on_board(pos) and Piece_Handler.get_piece_on_board(pos) is None
+
+    @staticmethod
+    def promote_piece(piece: Piece, promotion: str) -> None:
+        '''
+            Promotes a pawn to a given piece
+
+            Parameters
+            ----------
+            piece: Piece
+                the Pawn to be promoted
+
+            promotion: str
+                the name of the new piece
+        '''
+        Piece_Handler.pieces.remove(piece)
+        match promotion:
+            case "queen":
+                piece = Queen(piece.get_colour(), piece.get_pos())
+            case "knight":
+                piece = Knight(piece.get_colour(), piece.get_pos())
+            case "bishop":
+                piece = Bishop(piece.get_colour(), piece.get_pos())
+            case "rook":
+                piece = Rook(piece.get_colour(), piece.get_pos())
+        Piece_Handler.pieces.append(piece)
