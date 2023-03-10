@@ -707,6 +707,7 @@ class Piece_Handler():
         '''
             Initializes all the pieces
         '''
+        Piece_Handler.pieces = []
         for i in range(8):
             Piece_Handler.pieces.append(Pawn("white", (i, 6)))
             Piece_Handler.pieces.append(Pawn("black", (i, 1)))

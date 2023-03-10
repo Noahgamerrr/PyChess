@@ -3,9 +3,12 @@ from objects import Piece_Handler, Piece
 from typing import Tuple
 from sys import exit
 from pathlib import Path
+from enum import Enum
 
 pygame.init()
-screen = pygame.display.set_mode((800, 750))
+X = 800
+Y = 750
+screen = pygame.display.set_mode((X, Y))
 screen.fill('mediumseagreen')
 pygame.display.set_caption('PyChess')
 clock = pygame.time.Clock()
@@ -17,7 +20,9 @@ current_piece = None
 current_player = 0
 promotion_screen_active = False
 boardRectangle = pygame.Rect(START_X, START_Y, 8 * PIECE_SIDE, 8 * PIECE_SIDE)
-Piece_Handler.init_pieces()
+GameState = Enum('GameState', ['MENUE', 'RUNNING', 'GAMEOVER'])
+state = GameState.MENUE
+btnRect = None
 
 
 def load_board() -> None:
@@ -221,6 +226,88 @@ def is_promotion_ready() -> bool:
     return current_piece.get_class_name() == "Pawn" and (current_piece.get_pos()[1] == 0 or current_piece.get_pos()[1] == 7)
 
 
+def draw_screen(string: str) -> None:
+    global btnRect
+    titleFont = pygame.font.Font("freesansbold.ttf", 60)
+    title = titleFont.render(string, True, (0, 0, 0))
+    titleRect = title.get_rect()
+    titleRect.center = (X // 2, 150)
+    screen.blit(title, titleRect)
+    btnFont = pygame.font.Font("freesansbold.ttf", 45)
+    btn = btnFont.render("Play", True, (0, 0, 0))
+    btnRect = btn.get_rect()
+    btnRect.center = (X // 2, 400)
+    btnRectCpy = btnRect.copy()
+    btnRectCpy.inflate_ip(30, 30)
+    pygame.draw.rect(screen, (0, 0, 0), btnRectCpy, 3)
+    screen.blit(btn, btnRect)
+
+
+def draw_menue() -> None:
+    draw_screen("PyChess")
+
+
+def draw_game() -> None:
+    load_board()
+    load_pieces()
+    drawCircles()
+    if promotion_screen_active:
+        draw_promotion_screen()
+
+
+def click_on_menue() -> None:
+    global btnRect, state, circles, current_player
+    pos = pygame.mouse.get_pos()
+    if (btnRect.collidepoint(pos)):
+        state = GameState.RUNNING
+        Piece_Handler.init_pieces()
+        circles = []
+        current_player = 0
+
+
+def draw_gameover() -> None:
+    global current_player
+    if current_player == 0:
+        draw_screen("White has won")
+    else:
+        draw_screen("Black has won")
+
+
+def run_game() -> None:
+    global promotion_screen_active, current_piece, circles, current_player, state
+    if promotion_screen_active:
+        pos = get_promotion_position(pygame.mouse.get_pos())
+        if pos != (-1, -1):
+            promotion_piece = get_promotion(pos)
+            Piece_Handler.promote_piece(current_piece, promotion_piece)
+            current_piece = None
+            promotion_screen_active = False
+    else:
+        clicked_pos = get_position(pygame.mouse.get_pos())
+        piece_clicked = Piece_Handler.get_piece_on_board(clicked_pos)
+        if clicked_pos != (-1, -1) and piece_clicked is not None and current_piece is None:
+            white_turn = current_player == 0 and piece_clicked.get_colour() == "white"
+            black_turn = current_player == 1 and piece_clicked.get_colour() == "black"
+            if white_turn or black_turn:
+                set_circles(Piece_Handler.get_piece_on_board(clicked_pos))
+                current_piece = piece_clicked
+        elif current_piece is not None and clicked_pos != (-1, -1) and clicked_pos in circles:
+            clicked_piece = Piece_Handler.get_piece_on_board(clicked_pos)
+            if clicked_piece is not None and clicked_piece.get_class_name() == "King":
+                state = GameState.GAMEOVER
+                screen.fill("mediumseagreen")
+            elif current_piece.move_piece(clicked_pos):
+                circles = []
+                current_player = (current_player + 1) % 2
+                if is_promotion_ready():
+                    promotion_screen_active = True
+                else:
+                    current_piece = None
+        else:
+            circles = []
+            current_piece = None
+
+
 if __name__ == "__main__":
     while True:
         for event in pygame.event.get():
@@ -228,37 +315,17 @@ if __name__ == "__main__":
                 pygame.quit()
                 exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if promotion_screen_active:
-                    pos = get_promotion_position(pygame.mouse.get_pos())
-                    if pos != (-1, -1):
-                        promotion_piece = get_promotion(pos)
-                        Piece_Handler.promote_piece(current_piece, promotion_piece)
-                        current_piece = None
-                        promotion_screen_active = False
-                else:
-                    clicked_pos = get_position(pygame.mouse.get_pos())
-                    piece_clicked = Piece_Handler.get_piece_on_board(clicked_pos)
-                    if clicked_pos != (-1, -1) and piece_clicked is not None and current_piece is None:
-                        white_turn = current_player == 0 and piece_clicked.get_colour() == "white"
-                        black_turn = current_player == 1 and piece_clicked.get_colour() == "black"
-                        if white_turn or black_turn:
-                            set_circles(Piece_Handler.get_piece_on_board(clicked_pos))
-                            current_piece = piece_clicked
-                    elif current_piece is not None and clicked_pos != (-1, -1) and clicked_pos in circles:
-                        if current_piece.move_piece(clicked_pos):
-                            circles = []
-                            current_player = (current_player + 1) % 2
-                            if is_promotion_ready():
-                                promotion_screen_active = True
-                            else:
-                                current_piece = None
-                    else:
-                        circles = []
-                        current_piece = None
-        load_board()
-        load_pieces()
-        drawCircles()
-        if promotion_screen_active:
-            draw_promotion_screen()
+                match state:
+                    case GameState.MENUE | GameState.GAMEOVER:
+                        click_on_menue()
+                    case GameState.RUNNING:
+                        run_game()
+        match state:
+            case GameState.MENUE:
+                draw_menue()
+            case GameState.RUNNING:
+                draw_game()
+            case GameState.GAMEOVER:
+                draw_gameover()
         pygame.display.update()
         clock.tick(60)
