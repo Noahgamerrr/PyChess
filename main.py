@@ -227,6 +227,14 @@ def is_promotion_ready() -> bool:
 
 
 def draw_screen(string: str) -> None:
+    '''
+        Draws the menue and gameOver-screen to the window
+
+        Parameters
+        ----------
+        string: str
+            The title string
+    '''
     global btnRect
     titleFont = pygame.font.Font("freesansbold.ttf", 60)
     title = titleFont.render(string, True, (0, 0, 0))
@@ -244,10 +252,16 @@ def draw_screen(string: str) -> None:
 
 
 def draw_menue() -> None:
+    '''
+        Draws the menue to the window
+    '''
     draw_screen("PyChess")
 
 
 def draw_game() -> None:
+    '''
+        Draws the game to the window
+    '''
     load_board()
     load_pieces()
     drawCircles()
@@ -256,6 +270,9 @@ def draw_game() -> None:
 
 
 def click_on_menue() -> None:
+    '''
+        Checks if the player clickes on the play button
+    '''
     global btnRect, state, circles, current_player
     pos = pygame.mouse.get_pos()
     if (btnRect.collidepoint(pos)):
@@ -266,6 +283,9 @@ def click_on_menue() -> None:
 
 
 def draw_gameover() -> None:
+    '''
+        Draws the gameOver-screen to the window
+    '''
     global current_player
     if current_player == 0:
         draw_screen("White has won")
@@ -274,6 +294,9 @@ def draw_gameover() -> None:
 
 
 def run_game() -> None:
+    '''
+        Runs the game and contains all the chess-logic
+    '''
     global promotion_screen_active, current_piece, circles, current_player, state
     if promotion_screen_active:
         pos = get_promotion_position(pygame.mouse.get_pos())
