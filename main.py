@@ -48,7 +48,7 @@ def drawCircle(pos: Tuple[int, int]) -> None:
         pos: Tuple[int, int]
             the position of the circle where it needs to be drawn
     '''
-    if Piece_Handler.get_piece_on_board(pos) is None and pos != Piece_Handler.get_ghost_piece():
+    if Piece_Handler.get_piece_on_board(pos) is None and (pos != Piece_Handler.get_ghost_piece() or current_piece.get_class_name() != "Pawn"):
         rel_path = '\\sprites\\others\\move_circle.png'
     else:
         rel_path = '\\sprites\\others\\take_circle.png'
